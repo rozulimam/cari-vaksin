@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cari Vaksin</title>
+
+
+    <style>
+        html,
+        body {
+            padding: 0;
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        html { 
+        }
+
+        table {
+            width: 500px;
+        }
+
+        table tr td {
+            padding-top: 5px;
+        }
+
+        select {
+            padding: 10px;
+            width: 100%; 
+        }
+
+        button {
+            padding: 10px;
+        }
+
+        .title {
+            font-weight: bold;
+            font-size: 20pt;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 2px 0px 7px 0px;
+            background-color: #fff;
+            position: fixed;
+            bottom: -3px;
+            width: 100%;
+            font-size: 9pt;
+        }
+
+        .telegram, a {
+            text-decoration: none;
+            color: #0088cc
+        }
+
+        @media only screen and (max-device-width: 640px) {
+
+            /* Styles */
+            table {
+                width: 90%;
+            }
+        }
+
+        @media only screen and (max-device-width: 768px) {
+
+            /* Styles */
+            table {
+                width: 90%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <center>
+        <table>
+            <tr>
+                <td>
+                    <p>
+                        <center>
+                            <div class="title">CARI VAKSIN</div>
+                            <i>Salam sehat selalu</i>
+                        </center>
+                    </p>
+                    <p>
+                        Hai selamat datang 👋, saya akan bantu menemukan tempat vaksin yang ada dikota mu.
+                    </p>
+                    <p>
+                        Silahkan pilih <b>Provinsi</b> kemudian <b>Kota/Kabupaten</b> dimana kamu berada, terakhir klik tombol <b>Bantu Cari</b>.
+                    </p>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Provinsi</b>:<br>
+                    <select id="select_province">
+                        <option>Pilih</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <b>Kota/Kabupaten</b>:<br>
+                    <select id="select_city">
+                        <option>Pilih</option>
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <td>
+                    <button id="search">Bantu Cari</button>
+                </td>
+            </tr>
+        </table>
+        <br>
+        <br>
+        <table id="result">
+
+        </table>
+    </center>
+    <br>
+    <br>
+    <br>
+    <div class="footer">
+        Made with ❤ in Tasikmalaya - Source by <a href="https://covid19.go.id/">covid19.go.id</a> 🇮🇩
+    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            getProvince();
+        });
+
+        document.addEventListener('input', function(event) {
+            if (event.target.id !== 'select_province') return;
+            var value = event.target.value;
+            getCity(value)
+        }, false);
+
+        document.addEventListener('click', function(event) {
+            if (!event.target.matches('#search')) return;
+            getFaskes();
+        }, false);
+
+        document.addEventListener('input', function(event) {
+            if (event.target.id !== 'search') return;
+            var value = event.target.value;
+            getCity(value)
+        }, false);
+
+        function getProvince() {
+            var requestOptions = {
+                method: 'POST',
+                redirect: 'follow'
+            };
+
+            fetch("https://kipi.covid19.go.id/api/get-province", requestOptions)
+                .then(response => response.json())
+                .then(result =>
+                    setProvince(result['results'])
+                )
+                .catch(error => console.log('error', error));
+        }
+
+        function getFaskes() {
+            var province = document.getElementById("select_province").value;
+            var city = document.getElementById("select_city").value;
+
+            document.getElementById("result").innerHTML = "<tr><td align='center'>Proses pencarian sedang berlangsung ...</td></tr>";
+
+            var requestOptions = {
+                method: 'GET',
+                redirect: 'follow'
+            };
+
+            fetch("https://kipi.covid19.go.id/api/get-faskes-vaksinasi?skip=0&province=" + province + "&city=" + city, requestOptions)
+                .then(response => response.json())
+                .then(result =>
+                    setLocation(result['data'])
+                )
+                .catch(error => console.log('error', error));
+        }
+
+        function setProvince(province) {
+            var select_province = document.getElementById("select_province");
+            var select = "<option>Pilih</option>";
+            for (let index = 0; index < province.length; index++) {
+                select += "<option value='" + province[index].key + "'>" + province[index].value + "</option>";
+            }
+            select_province.innerHTML = select;
+        }
+
+        function getCity(province) {
+            var requestOptions = {
+                method: 'POST',
+                redirect: 'follow'
+            };
+
+            fetch("https://kipi.covid19.go.id/api/get-city?start_id=" + province, requestOptions)
+                .then(response => response.json())
+                .then(result =>
+                    setCity(result['results'])
+                )
+                .catch(error => console.log('error', error));
+        }
+
+        function setCity(city) {
+            var select_city = document.getElementById("select_city");
+            var select = "<option>Pilih</option>";
+            for (let index = 0; index < city.length; index++) {
+                select += "<option value='" + city[index].key + "'>" + city[index].value + "</option>";
+            }
+            select_city.innerHTML = select;
+        }
+
+        function setLocation(location) {
+            var result_area = document.getElementById("result");
+            var row = "";
+            var name;
+            var maps;
+            var address;
+            var no_telp;
+
+            if (location.length == 0) {
+                alert("Dengan berat hati, maaf saat ini saya tidak menemukan tempat vaksin di kota mu.");
+            } else {
+                alert("Terima kasih sudah menunggu, saat ini saya menemukan " + location.length + " tempat vaksin di kota mu.");
+            }
+
+            row += "<tr><td><i>Saat ini <b>" + location.length + "</b> lokasi telah ditemukan.</i><hr></td></tr>";
+            for (let index = 0; index < location.length; index++) {
+                name = location[index].nama;
+                maps = "<a href='https://maps.google.com/?q=" + location[index].latitude + "," + location[index].longitude + "' target='_blank'>(Peta Lokasi)</a>";
+                address = location[index].alamat;
+                no_telp = location[index].telp;
+                row += "<tr><td><b>" + name + "</b><br>" + address + "<br>" + no_telp + "<br>" + maps + "<hr></td></tr>";
+            }
+            result_area.innerHTML = row;
+        }
+    </script>
+</body>
+
+</html>
