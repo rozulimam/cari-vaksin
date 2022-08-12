@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="nice-select2.min.css">
     <link rel="stylesheet" href="bulma.min.css">
     <title>Cari Vaksin</title>
     <style>
@@ -12,6 +13,9 @@
         .select select {
             width: 100%;
         }
+        .nice-select::before, .nice-select::after {display: none;}
+        .nice-select, .nice-select:active, .nice-select.open, .nice-select:focus {border-color: #00d1b2;}
+        .select:not(.is-multiple):not(.is-loading):hover::after, .nice-select:hover {border-color: #00b89c;}
     </style>
 </head>
 
@@ -40,18 +44,14 @@
             <div class="field is-narrow">
                 <label class="label">Provinsi</label>
                 <div class="select is-primary">
-                    <select id="select_province">
-                        <option>Pilih</option>
-                    </select>
+                    <select id="select_province" class="wide"></select>
                 </div>
             </div>
             <div class="field is-narrow">
                 <label class="label">Kota</label>
                 <div class="control">
                     <div class="select is-primary">
-                        <select id="select_city">
-                            <option>Pilih</option>
-                        </select>
+                        <select id="select_city" class="wide"></select>
                     </div>
                 </div>
             </div>
@@ -72,12 +72,15 @@
             </p>
         </div>
     </footer>
+    <script src="nice-select2.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             getProvince();
+            NiceSelect.bind(select_city, {searchable: true});
+            setSelectPlaceholder(select_city);
         });
 
-        document.addEventListener('input', function(event) {
+        document.addEventListener('change', function(event) {
             if (event.target.id !== 'select_province') return;
             var value = event.target.value;
             getCity(value)
@@ -131,11 +134,13 @@
 
         function setProvince(province) {
             var select_province = document.getElementById("select_province");
-            var select = "<option>Pilih</option>";
+            var select = "<option value='Pilih' selected disabled></option>";
             for (let index = 0; index < province.length; index++) {
                 select += "<option value='" + province[index].key + "'>" + province[index].value + "</option>";
             }
             select_province.innerHTML = select;
+            NiceSelect.bind(select_province, {searchable: true});
+            setSelectPlaceholder(select_province);
         }
 
         function getCity(province) {
@@ -154,11 +159,16 @@
 
         function setCity(city) {
             var select_city = document.getElementById("select_city");
-            var select = "<option>Pilih</option>";
+            var select = "<option value='Pilih' selected disabled></option>";
             for (let index = 0; index < city.length; index++) {
                 select += "<option value='" + city[index].key + "'>" + city[index].value + "</option>";
             }
             select_city.innerHTML = select;
+            var siblingElement = select_city.nextElementSibling;
+            if (siblingElement != null) siblingElement.remove();
+            
+            NiceSelect.bind(select_city, {searchable: true});
+            setSelectPlaceholder(select_city);
         }
 
         function setLocation(location) {
@@ -207,6 +217,10 @@
             </div><br>`;
 
             return card;
+        }
+
+        function setSelectPlaceholder(el) {
+            el.nextElementSibling.children[0].innerHTML = 'Pilih';
         }
     </script>
     <!-- Global site tag (gtag.js) - Google Analytics -->
